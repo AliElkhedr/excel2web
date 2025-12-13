@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام الاستعلام</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      color: #333;
+    }
+    header {
+      background: linear-gradient(135deg, #004080, #0066cc);
+      color: #fff;
+      padding: 30px 20px 60px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    main {
+      margin: -40px auto 30px;
+      position: relative;
+      max-width: 600px;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      text-align: right;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    select, input, button {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 15px;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      transition: 0.3s;
+    }
+    input:focus, select:focus {
+      border-color: #004080;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
+    }
+    button {
+      background: #004080;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      border: none;
+    }
+    button:hover {
+      background: #0059b3;
+      transform: translateY(-2px);
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #eee;
+      padding: 12px 15px;
+      text-align: center;
+    }
+    th {
+      background: #f8f9fa;
+      color: #004080;
+      font-weight: 700;
+    }
+    tr:nth-child(even) { background-color: #fcfcfc; }
+    tr:hover { background-color: #f1f7ff; }
+    .section {
+      background: #e3f2fd;
+      color: #004080;
+      font-weight: bold;
+      text-align: center;
+    }
+    .error {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    /* Loader */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #004080;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .logo {
+      height: 60px;
+      width: auto;
+      background: #fff;
+      padding: 5px;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .print-btn {
+      background: #28a745;
+      margin-top: 20px;
+    }
+    .print-btn:hover {
+      background: #218838;
+    }
+    @media print {
+      label, select, .input-group, .print-btn {
+        display: none !important;
+      }
+      header {
+        background: none !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+      main {
+        margin: 0 auto !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      body {
+        background: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="شعار المدرسة" class="logo">
+    <!--تعديل اسم المشروع باسم المدرسة اوغيره-->
+    <h2 style="margin: 0;">📘 نظام الاستعلام</h2>
+  </header>
+  <main>
+    <!--يمكنك تعديل اسم القائمة اختر الصف او الفرقة او القسم مثلا-->
+    <label for="classSelect">اختر القائمة:</label>
+    <select id="classSelect"></select>
+    <!--يمكنك تعديل كود البحث الى ادخل رقم الجلوس او رقم المنتج او سجل الموظف مثلا-->
+    <label for="studentId">ادخل كود البحث:</label>
+    <div class="input-group">
+      <input type="text" id="studentId" placeholder="أدخل الرقم التعريفي..." inputmode="numeric">
+      <button onclick="searchResult()" style="width: auto; min-width: 100px;">بحث</button>
+    </div>
+    <div id="result"></div>
+  </main>
+
+  <script>
+    // تحميل أسماء الأوراق عند فتح الصفحة
+    document.addEventListener("DOMContentLoaded", function() {
+      fetch("readExcel.php?action=getSheets")
+        .then(res => {
+          if (!res.ok) throw new Error("فشل الاتصال بالخادم");
+          return res.json();
+        })
+        .then(data => {
+          let select = document.getElementById("classSelect");
+          if (data.error) throw new Error(data.error);
+          if (!Array.isArray(data)) throw new Error("بيانات غير صالحة");
+
+          // إضافة خيار افتراضي لإجبار المستخدم على الاختيار
+          select.innerHTML = '<option value="" disabled selected>-- اختر من القائمة --</option>';
+
+          data.forEach(sheet => {
+            let opt = document.createElement("option");
+            opt.value = sheet;
+            opt.textContent = sheet;
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("classSelect").innerHTML = `<option disabled selected>${err.message}</option>`;
+        });
+    });
+
+    function searchResult() {
+      let sheet = document.getElementById("classSelect").value;
+      let studentId = document.getElementById("studentId").value.trim();
+
+      if (!sheet) {
+        document.getElementById("result").innerHTML = "<p class='error'>⚠️ يرجى اختيار القائمة أولاً</p>";
+        return;
+      }
+      if (!studentId) {
+        document.getElementById("result").innerHTML = "<p class='error'>⚠️ يرجى إدخال كود البحث</p>";
+        return;
+      }
+
+      document.getElementById("result").innerHTML = "<div class='loader'></div>";
+
+      const url = `readExcel.php?action=getResult&sheet=${encodeURIComponent(sheet)}&id=${encodeURIComponent(studentId)}`;
+
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          if (data.error) {
+            document.getElementById("result").innerHTML = `<p class='error'>⚠️ ${data.error}</p>`;
+            return;
+          }
+          let table = "<table>";
+          data.forEach(item => {
+            if (item.type === "section") {
+              table += "<tr><th colspan='2' class='section'>" + item.header + "</th></tr>";
+            } else {
+              table += "<tr><th>" + item.header + "</th><td>" + (item.value ?? "") + "</td></tr>";
+            }
+          });
+          table += "</table>";
+          table += '<button onclick="window.print()" class="print-btn">🖨️ طباعة التقرير</button>';
+          document.getElementById("result").innerHTML = table;
+        })
+        .catch(err => {
+          document.getElementById("result").innerHTML = `<p class='error'>⚠️ حدث خطأ في الاتصال: ${err.message}</p>`;
+        });
+    }
+  </script>
+  <script>
+    // كود التذييل وحقوق الملكية (مشفر للحماية)
+    (function(){
+      var _0x = ["\x68\x74\x74\x70\x73\x3A\x2F\x2F\x77\x77\x77\x2E\x61\x6C\x69\x65\x6C\x6B\x68\x65\x64\x72\x2E\x63\x6F\x6D\x2F\x32\x30\x32\x35\x2F\x31\x32\x2F\x72\x65\x73\x75\x6C\x74\x2D\x6E\x6F\x6F\x6E\x35\x2E\x68\x74\x6D\x6C", "\u0645\u0634\u0631\u0648\u0639 \u0646\u0634\u0631 \u0646\u062a\u0627\u0626\u062c \u0639\u0644\u0649 \u0627\u0633\u062a\u0636\u0627\u0641\u0629 - \u0627\u0644\u062d\u0642\u0648\u0642 \u0645\u062d\u0641\u0648\u0638\u0629 2026"];
+      var f = document.createElement("footer");
+      f.style.marginTop = "40px";
+      f.style.padding = "20px";
+      f.style.fontSize = "14px";
+      f.style.color = "#777";
+      f.style.borderTop = "1px solid #eee";
+      var a = document.createElement("a");
+      a.href = _0x[0];
+      a.target = "_blank";
+      a.textContent = _0x[1];
+      a.style.color = "#004080";
+      a.style.textDecoration = "none";
+      a.style.fontWeight = "600";
+      a.onmouseover = function(){this.style.textDecoration="underline"};
+      a.onmouseout = function(){this.style.textDecoration="none"};
+      f.appendChild(a);
+      document.body.appendChild(f);
+    })();
+  </script>
+  <script>
+    // حماية الواجهة: منع الزر الأيمن واختصارات الفحص
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.onkeydown = function(e) {
+      if (e.keyCode == 123) return false; // F12
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false; // Ctrl+Shift+I
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false; // Ctrl+Shift+C
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false; // Ctrl+Shift+J
+      if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false; // Ctrl+U
+    };
+  </script>
+</body>
+</html>

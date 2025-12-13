@@ -1,0 +1,27 @@
+# تعيين الصفحة الافتراضية لتكون index.html
+DirectoryIndex index.html
+
+# 1. منع عرض قائمة الملفات (Directory Listing)
+Options -Indexes
+
+# 2. منع تحميل ملف الإكسل مباشرة (يسمح فقط لملف PHP بقراءته)
+<Files "natiga.xlsx">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</Files>
+
+# 3. حماية ملفات النظام والمكتبات
+<FilesMatch "^\.|^composer\.(json|lock)|README\.md">
+    Require all denied
+</FilesMatch>
+
+# 4. منع الوصول لمجلد vendor
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^vendor/.*$ - [F,L]
+</IfModule>
