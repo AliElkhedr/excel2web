@@ -156,7 +156,7 @@
   <header>
     <img src="logo.png" alt="شعار المدرسة" class="logo">
     <!--تعديل اسم المشروع باسم المدرسة اوغيره-->
-    <h2 style="margin: 0;">📘 نظام الاستعلام -ن5</h2>
+    <h2 style="margin: 0;">📘 نظام الاستعلام</h2>
   </header>
   <main>
     <!--يمكنك تعديل اسم القائمة اختر الصف او الفرقة او القسم مثلا-->
@@ -227,17 +227,39 @@
             document.getElementById("result").innerHTML = `<p class='error'>⚠️ ${data.error}</p>`;
             return;
           }
-          let table = "<table>";
+          
+          // إنشاء الجدول بطريقة آمنة (DOM Manipulation) بدلاً من النصوص
+          let resultDiv = document.getElementById("result");
+          resultDiv.innerHTML = ""; // مسح المحتوى القديم
+          
+          let table = document.createElement("table");
+          
           data.forEach(item => {
+            let tr = document.createElement("tr");
             if (item.type === "section") {
-              table += "<tr><th colspan='2' class='section'>" + item.header + "</th></tr>";
+              let th = document.createElement("th");
+              th.colSpan = 2;
+              th.className = "section";
+              th.textContent = item.header;
+              tr.appendChild(th);
             } else {
-              table += "<tr><th>" + item.header + "</th><td>" + (item.value ?? "") + "</td></tr>";
+              let th = document.createElement("th");
+              th.textContent = item.header;
+              let td = document.createElement("td");
+              td.textContent = (item.value ?? ""); // استخدام textContent يمنع XSS
+              tr.appendChild(th);
+              tr.appendChild(td);
             }
+            table.appendChild(tr);
           });
-          table += "</table>";
-          table += '<button onclick="window.print()" class="print-btn">🖨️ طباعة التقرير</button>';
-          document.getElementById("result").innerHTML = table;
+          
+          resultDiv.appendChild(table);
+          
+          let printBtn = document.createElement("button");
+          printBtn.className = "print-btn";
+          printBtn.textContent = "🖨️ طباعة التقرير";
+          printBtn.onclick = function() { window.print(); };
+          resultDiv.appendChild(printBtn);
         })
         .catch(err => {
           document.getElementById("result").innerHTML = `<p class='error'>⚠️ حدث خطأ في الاتصال: ${err.message}</p>`;
@@ -266,17 +288,6 @@
       f.appendChild(a);
       document.body.appendChild(f);
     })();
-  </script>
-  <script>
-    // حماية الواجهة: منع الزر الأيمن واختصارات الفحص
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-    document.onkeydown = function(e) {
-      if (e.keyCode == 123) return false; // F12
-      if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false; // Ctrl+Shift+I
-      if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false; // Ctrl+Shift+C
-      if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false; // Ctrl+Shift+J
-      if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false; // Ctrl+U
-    };
   </script>
 </body>
 </html>

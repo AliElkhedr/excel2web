@@ -1,6 +1,27 @@
 <?php
+session_start(); // بدء الجلسة لتتبع الطلبات
 error_reporting(E_ERROR | E_PARSE);
 header('Content-Type: application/json; charset=utf-8');
+
+// --- إعدادات الأمان (Security Checks) ---
+
+// 1. التحقق من مصدر الطلب (Referer Check) لمنع الوصول المباشر
+$referer = $_SERVER['HTTP_REFERER'] ?? '';
+if (empty($referer) || stripos($referer, $_SERVER['HTTP_HOST']) === false) {
+    http_response_code(403); // Forbidden
+    echo json_encode(["error" => "⚠️ وصول غير مصرح به (Direct Access Forbidden)"], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 2. منع الإغراق بالطلبات (Rate Limiting) - طلب واحد كحد أقصى كل ثانية
+if (isset($_SESSION['last_req_time']) && (time() - $_SESSION['last_req_time'] < 1)) {
+    http_response_code(429); // Too Many Requests
+    echo json_encode(["error" => "⚠️ يرجى الانتظار قليلاً قبل المحاولة مرة أخرى"], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$_SESSION['last_req_time'] = time();
+// --- نهاية إعدادات الأمان ---
+
 require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 

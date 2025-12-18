@@ -5,7 +5,7 @@ DirectoryIndex index.html
 Options -Indexes
 
 # 2. منع تحميل ملف الإكسل مباشرة (يسمح فقط لملف PHP بقراءته)
-<Files "natiga.xlsx">
+<FilesMatch "\.xlsx$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -13,7 +13,7 @@ Options -Indexes
         Order deny,allow
         Deny from all
     </IfModule>
-</Files>
+</FilesMatch>
 
 # 3. حماية ملفات النظام والمكتبات
 <FilesMatch "^\.|^composer\.(json|lock)|README\.md">
