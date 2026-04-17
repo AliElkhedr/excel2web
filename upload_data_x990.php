@@ -1,4 +1,9 @@
 <?php
+/**
+ * Project: Student Results System (Excel2Web)
+ * Author: Ali Al-Khader (https://alielkhedr.com)
+ * License: MIT
+ */
 // إعدادات الصفحة
 $uploadDir = __DIR__ . '/'; // حفظ في نفس المجلد الحالي ليتم قراءته بواسطة readExcel.php
 $targetFileName = 'natiga.xlsx'; // الاسم الإجباري للملف
@@ -111,6 +116,10 @@ if ($current_file_name == 'upload_data_x99.php') {
         </div>
     </div>
 </div>
+
+<footer class="text-center mt-5 mb-4 text-muted border-top pt-3">
+    <strong>تم التطوير بواسطة <a href="https://alielkhedr.com" class="text-decoration-none" style="color: #004080;">علي الخضر</a> &copy; 2026</strong>
+</footer>
 
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

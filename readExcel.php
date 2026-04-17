@@ -1,4 +1,9 @@
 <?php
+/**
+ * Project: Student Results System (Excel2Web)
+ * Author: Ali Al-Khader (https://alielkhedr.com)
+ * License: MIT
+ */
 session_start(); // بدء الجلسة لتتبع الطلبات
 error_reporting(E_ERROR | E_PARSE);
 header('Content-Type: application/json; charset=utf-8');

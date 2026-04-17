@@ -63,8 +63,12 @@
 ### صفحة رفع النتيجة في حالة التحديث
 ![صفحة رفع النتيجة](screenshots/upload.png)
 
-
 ### رسالة خطأ ودية
 ![رسالة خطأ](screenshots/error.png)
 ![رسالة خطأ](screenshots/error1.png)
 ![رسالة خطأ](screenshots/error2.png)
+
+
+
+## 📜 License
+هذا المشروع مرخص بموجب رخصة MIT - راجع ملف [LICENSE](file:///f:/GitHub/excel2web/LICENSE) للمزيد.
