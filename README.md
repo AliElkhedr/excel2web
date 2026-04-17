@@ -72,3 +72,7 @@
 
 ## 📜 License
 هذا المشروع مرخص بموجب رخصة MIT - راجع ملف [LICENSE](file:///f:/GitHub/excel2web/LICENSE) للمزيد.
+
+**تطوير:** [علي الخضر](https://github.com/AliElkhedr)
+**للتواصل:** يمكن التواصل معي في حال الرغبة في تطوير المشروع او اضافة ميزات جديدة عبر البريد الالكتروني [alielkhedr@gmail.com]
+
