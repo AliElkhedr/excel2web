@@ -27,18 +27,87 @@ if (isset($_SESSION['last_req_time']) && (time() - $_SESSION['last_req_time'] < 
 $_SESSION['last_req_time'] = time();
 // --- نهاية إعدادات الأمان ---
 
-require 'vendor/autoload.php';
-use PhpOffice\PhpSpreadsheet\IOFactory;
-
 $file = __DIR__ . "/natiga.xlsx";
-if (!file_exists($file)) {
+$cacheFile = __DIR__ . "/natiga_cache.json";
+$useCache = file_exists($cacheFile);
+
+// تحميل مكتبة PhpSpreadsheet فقط عند الحاجة (إذا لم يوجد cache)
+if (!$useCache) {
+    require 'vendor/autoload.php';
+}
+
+if (!file_exists($file) && !$useCache) {
     echo json_encode(["error" => "⚠️ ملف النتائج غير موجود"], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $action = $_GET['action'] ?? '';
+
 try {
-    $spreadsheet = IOFactory::load($file);
+    // --- الوضع السريع: قراءة من JSON Cache ---
+    if ($useCache) {
+        $cacheData = json_decode(file_get_contents($cacheFile), true);
+        
+        if ($action === "getSheets") {
+            echo json_encode(array_keys($cacheData), JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        if ($action === "getResult") {
+            $sheetName = $_GET['sheet'] ?? '';
+            $studentId = $_GET['id'] ?? '';
+            if (!$sheetName || !$studentId) {
+                echo json_encode(["error" => "⚠️ يرجى اختيار القائمة وإدخال كود البحث"], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            if (!isset($cacheData[$sheetName])) {
+                echo json_encode(["error" => "⚠️ الورقة المحددة غير موجودة"], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            $rows = $cacheData[$sheetName];
+            $headers = $rows[0] ?? [];
+            $target = trim((string)$studentId);
+            $found = false;
+
+            foreach ($rows as $rowIndex => $row) {
+                if ($rowIndex === 0) continue;
+                $cellId = trim((string)($row[0] ?? ''));
+                if ($cellId === $target) {
+                    $output = [];
+                    for ($i = 0; $i < count($headers); $i++) {
+                        $header = trim((string)($headers[$i] ?? ''));
+                        $value  = isset($row[$i]) ? trim((string)$row[$i]) : "";
+
+                        if ($i === 0) {
+                            $output[] = ["type" => "grade", "header" => $header, "value" => $value];
+                        } else {
+                            if ($value === "") {
+                                $output[] = ["type" => "section", "header" => $header];
+                            } else {
+                                $output[] = ["type" => "grade", "header" => $header, "value" => $value];
+                            }
+                        }
+                    }
+                    echo json_encode($output, JSON_UNESCAPED_UNICODE);
+                    $found = true;
+                    break;
+                }
+            }
+
+            if (!$found) {
+                echo json_encode(["error" => "لم يتم العثور على بيانات لهذا الرقم"], JSON_UNESCAPED_UNICODE);
+            }
+            exit;
+        }
+
+        echo json_encode(["error" => "⚠️ طلب غير معروف"], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // --- الوضع الاحتياطي: قراءة من Excel مباشرة (إذا لم يوجد Cache) ---
+    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file);
 
     if ($action === "getSheets") {
         $sheets = $spreadsheet->getSheetNames();

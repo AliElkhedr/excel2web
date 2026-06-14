@@ -4,8 +4,8 @@ DirectoryIndex index.html
 # 1. منع عرض قائمة الملفات (Directory Listing)
 Options -Indexes
 
-# 2. منع تحميل ملف الإكسل مباشرة (يسمح فقط لملف PHP بقراءته)
-<FilesMatch "\.xlsx$">
+# 2. منع تحميل ملف الإكسل وملف الكاش مباشرة (يسمح فقط لملف PHP بقراءته)
+<FilesMatch "\.(xlsx|json)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

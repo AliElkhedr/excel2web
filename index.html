@@ -7,6 +7,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام الاستعلام</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
@@ -166,11 +167,11 @@
   <main>
     <!--يمكنك تعديل اسم القائمة اختر الصف او الفرقة او القسم مثلا-->
     <label for="classSelect">اختر القائمة:</label>
-    <select id="classSelect"></select>
+    <select id="classSelect"><option disabled selected>⏳ جاري تحميل القائمة...</option></select>
     <!--يمكنك تعديل كود البحث الى ادخل رقم الجلوس او رقم المنتج او سجل الموظف مثلا-->
     <label for="studentId">ادخل كود البحث:</label>
     <div class="input-group">
-      <input type="text" id="studentId" placeholder="أدخل الرقم التعريفي..." inputmode="numeric">
+      <input type="text" id="studentId" placeholder="أدخل الرقم التعريفي..." inputmode="numeric" onkeypress="if(event.key==='Enter')searchResult()">
       <button onclick="searchResult()" style="width: auto; min-width: 100px;">بحث</button>
     </div>
     <div id="result"></div>
