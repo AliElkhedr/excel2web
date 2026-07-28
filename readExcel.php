@@ -107,7 +107,25 @@ try {
     }
 
     // --- الوضع الاحتياطي: قراءة من Excel مباشرة (إذا لم يوجد Cache) ---
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file);
+    ini_set('memory_limit', '1536M');
+
+    // مرشّح لتقييد نطاق القراءة (يمنع استهلاك الذاكرة إذا كان نطاق الملف الفعلي فاسداً/متضخماً)
+    if (!class_exists('LimitedRangeReadFilter')) {
+        class LimitedRangeReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+            const MAX_ROW = 3000;
+            const MAX_COL_INDEX = 60; // يعادل العمود BH تقريباً
+            public function readCell($columnAddress, $row, $worksheetName = '') {
+                if ($row > self::MAX_ROW) return false;
+                $colIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
+                return $colIndex <= self::MAX_COL_INDEX;
+            }
+        }
+    }
+
+    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+    $reader->setReadDataOnly(true); // تجاهل التنسيقات لتقليل استهلاك الذاكرة
+    $reader->setReadFilter(new LimitedRangeReadFilter());
+    $spreadsheet = $reader->load($file);
 
     if ($action === "getSheets") {
         $sheets = $spreadsheet->getSheetNames();

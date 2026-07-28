@@ -79,8 +79,26 @@ if ($isLoggedIn && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['excel
                 
                 // توليد JSON Cache لتسريع القراءة
                 try {
+                    ini_set('memory_limit', '1536M');
                     require_once 'vendor/autoload.php';
-                    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($targetFilePath);
+
+                    // مرشّح لتقييد نطاق القراءة (يمنع استهلاك الذاكرة إذا كان نطاق الملف الفعلي فاسداً/متضخماً)
+                    if (!class_exists('LimitedRangeReadFilter')) {
+                        class LimitedRangeReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                            const MAX_ROW = 3000;
+                            const MAX_COL_INDEX = 60; // يعادل العمود BH تقريباً
+                            public function readCell($columnAddress, $row, $worksheetName = '') {
+                                if ($row > self::MAX_ROW) return false;
+                                $colIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
+                                return $colIndex <= self::MAX_COL_INDEX;
+                            }
+                        }
+                    }
+
+                    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+                    $reader->setReadDataOnly(true); // تجاهل التنسيقات لتقليل استهلاك الذاكرة
+                    $reader->setReadFilter(new LimitedRangeReadFilter());
+                    $spreadsheet = $reader->load($targetFilePath);
                     $cacheData = [];
                     foreach ($spreadsheet->getSheetNames() as $sheetName) {
                         $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -114,6 +132,25 @@ if (file_exists($targetFilePath)) {
 } else {
     $fileInfoMsg = "الملف غير موجود حالياً.";
 }
+
+// --- تحديد أقصى حجم ملف مسموح به من إعدادات الاستضافة (PHP) ---
+function iniSizeToBytes($val) {
+    $val = trim($val);
+    if ($val === '' || $val === '-1') return PHP_INT_MAX;
+    $unit = strtolower(substr($val, -1));
+    $num = (float) $val;
+    switch ($unit) {
+        case 'g': return $num * 1024 * 1024 * 1024;
+        case 'm': return $num * 1024 * 1024;
+        case 'k': return $num * 1024;
+        default:  return (float) $val;
+    }
+}
+$uploadMaxBytes = iniSizeToBytes(ini_get('upload_max_filesize'));
+$postMaxBytes   = iniSizeToBytes(ini_get('post_max_size'));
+$effectiveMaxBytes = min($uploadMaxBytes, $postMaxBytes);
+$effectiveMaxMB = round($effectiveMaxBytes / (1024 * 1024), 1);
+$serverLimitsMsg = "استضافتك الحالية لا تستقبل حجم ملف أكبر من: <strong>{$effectiveMaxMB} MB</strong> (حد الذاكرة المخصص للمعالجة: <span dir='ltr'>" . ini_get('memory_limit') . "</span>)";
 ?>
 
 <!DOCTYPE html>
@@ -196,6 +233,7 @@ if ($current_file_name == 'upload_data_x990.php') {
                 <div class="mt-4 text-center">
                     <small class="text-muted d-block">ملاحظة: يقبل النظام فقط ملفاً باسم <strong>natiga.xlsx</strong></small>
                     <small class="text-muted d-block mt-1"><?php echo $fileInfoMsg; ?></small>
+                    <small class="text-danger d-block mt-1"><?php echo $serverLimitsMsg; ?></small>
                 </div>
             <?php endif; ?>
         </div>
